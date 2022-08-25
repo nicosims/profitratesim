@@ -27,7 +27,7 @@ timescale["R", 1]<-timescale["S",1]/(timescale["V",1]+timescale["C",1])
 exp[1:n]<-.3
 #exp<-(sample(20:30, n, replace = TRUE))/100
 #exp<-sort(exp, decreasing = TRUE)
-#rate of exploitation
+#rate of variable capital
 t<-2
 while (t<=n)
 {
@@ -49,7 +49,7 @@ yminmax2<-c(timescale["R",2:n],exp[2:n])
 plot(time[2:n], timescale["R",2:n], type = "l", xlab = "Time", ylab = "Rate of Profit", 
      ylim = c(min(yminmax2), max(yminmax2)))
 lines(time[2:n], exp[2:n], col = "blue" )
-legend(x=xsamp,y=timescale["R",5],c("Rate of Profit","Rate of Exploitation"),
+legend(x=xsamp,y=timescale["R",5],c("Rate of Profit","Rate of Variable Capital"),
        cex=.8,col=c("black","blue"),pch=c(1,2))
 plot(time[2:n], timescale["C",2:n], type = "l", col ="red", xlab = "time", 
      ylim = c(min(yminmax), max(yminmax)), ylab = "Investment and Constant Capital")
