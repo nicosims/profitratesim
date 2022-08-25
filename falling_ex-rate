@@ -1,0 +1,61 @@
+d<-5
+##depreciation timeline
+n<-100
+##number of iterations
+time<-c(1:n)
+timescale <- matrix(nrow=6, ncol = n)
+timex <- matrix(nrow=1, ncol = n)
+timex<-c(sample(100, n, replace = TRUE))
+row.names(timescale)<-c("S", "V", "C", "Investment", "Capitalist Consumption", "R")
+timescale["S",1]<-30
+timescale["V",1]<-65
+timescale["C",1]<-5
+total<-sum(timescale["S",1], timescale["V",1], timescale["C",1] )
+ 
+capconratio[1:n]<-.5
+#capconratio<-(sample(30:90, n, replace = TRUE))/100
+#capconratio<-sort(capconratio, decreasing = FALSE)
+##amount of surplus consumed by capitalists
+ 
+timescale["Capitalist Consumption", 1]<-timescale["S",1]*capconratio[1]
+timescale["Investment",1]<-timescale["S",1]-timescale["Capitalist Consumption", 1]
+cstock<-timescale["C",1]*(d)
+##stock of capital
+timescale["R", 1]<-timescale["S",1]/(timescale["V",1]+timescale["C",1])
+ 
+#exp[1:n]<-.3
+exp<-(sample(20:30, n, replace = TRUE))/100
+exp<-sort(exp, decreasing = TRUE)
+#rate of exploitation
+t<-2
+while (t<=n)
+{
+ 
+  timescale["C", t]<-round(cstock/d, digits =3);
+  timescale["S", t]<-round((total-timescale["C", (t)])*((exp[t])), digits = 3);
+  timescale["V", t]<-round((total-timescale["C", (t)])*(1-(exp[t])), digits = 3);
+  timescale["Capitalist Consumption", t]<-round(timescale["S",t]*capconratio[t], digits =3);
+  timescale["Investment",t]<-round(timescale["S",t]-timescale["Capitalist Consumption", t], digits = 3);
+  timescale["R", t]<- round(timescale["S",t]/(timescale["V",t]+timescale["C",t]), digits = 3);
+  cstock<-round(cstock+timescale["Investment",t]-timescale["C", t], digits = 3);
+  t<-t+1
+}
+ 
+xsamp<-(time[5])
+ysamp<-(timescale["C",5])
+yminmax<-c(timescale["C",2:n],timescale["Investment",2:n] )
+plot(time[2:n], timescale["R",2:n], type = "l", xlab = "Time", ylab = "Rate of Profit")
+lines(time[2:n], exp[2:n], col = "blue" )
+legend(x=xsamp,y=timescale["R",5],c("Rate of Profit","Rate of Exploitation"),cex=.8,col=c("black","blue"),pch=c(1,2))
+plot(time[2:n], timescale["C",2:n], type = "l", col ="red", xlab = "time", 
+     ylim = c(min(yminmax), max(yminmax)), ylab = "Investment and Constant Capital")
+lines(time[2:n], timescale["Investment",2:n], col = "blue")
+legend(x=xsamp,y=ysamp,c("Constant Capital","Investment"),cex=.8,col=c("red","blue"),pch=c(1,2))
+ratio<-timescale["Investment",]/(timescale["C",])
+ratio1<-ratio[2:n]
+plot(ratio1, type = "l", xlab = "time", ylab = "Ratio of Constant Capital and Investment")
+OOC<-timescale["C",]/(timescale["V",])
+OOC2<-OOC[2:n]
+plot(OOC2, type = "l", xlab = "time", ylab = "Organic Capital Composition")
+head(timescale)
+timescale["S", n]/(timescale["V", n]+timescale["S", n])
