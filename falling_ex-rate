@@ -11,18 +11,19 @@ timescale["S",1]<-30
 timescale["V",1]<-65
 timescale["C",1]<-5
 total<-sum(timescale["S",1], timescale["V",1], timescale["C",1] )
- 
+
+capconratio<-matrix()
 capconratio[1:n]<-.5
 #capconratio<-(sample(30:90, n, replace = TRUE))/100
 #capconratio<-sort(capconratio, decreasing = FALSE)
 ##amount of surplus consumed by capitalists
- 
+
 timescale["Capitalist Consumption", 1]<-timescale["S",1]*capconratio[1]
 timescale["Investment",1]<-timescale["S",1]-timescale["Capitalist Consumption", 1]
 cstock<-timescale["C",1]*(d)
 ##stock of capital
 timescale["R", 1]<-timescale["S",1]/(timescale["V",1]+timescale["C",1])
- 
+
 #exp[1:n]<-.3
 exp<-(sample(20:30, n, replace = TRUE))/100
 exp<-sort(exp, decreasing = TRUE)
@@ -30,7 +31,7 @@ exp<-sort(exp, decreasing = TRUE)
 t<-2
 while (t<=n)
 {
- 
+  
   timescale["C", t]<-round(cstock/d, digits =3);
   timescale["S", t]<-round((total-timescale["C", (t)])*((exp[t])), digits = 3);
   timescale["V", t]<-round((total-timescale["C", (t)])*(1-(exp[t])), digits = 3);
@@ -40,7 +41,7 @@ while (t<=n)
   cstock<-round(cstock+timescale["Investment",t]-timescale["C", t], digits = 3);
   t<-t+1
 }
- 
+
 xsamp<-(time[5])
 ysamp<-(timescale["C",5])
 yminmax<-c(timescale["C",2:n],timescale["Investment",2:n] )
