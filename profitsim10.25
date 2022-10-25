@@ -14,7 +14,7 @@ total<-sum(timescale["S",1], timescale["V",1], timescale["C",1] )
 
 #capconratio[1:n]<-.4
 capconratio<-matrix()
-capconratio1<-read.csv("C:/Users/ndvil/Downloads/invRdata.csv")
+capconratio1<-read.csv("insert your file path here/invRdata.csv")
 capconratio[1:n]<-capconratio1[1:n,1]
 #capconratio<-(sample(30:90, n, replace = TRUE))/100
 #capconratio<-sort(capconratio, decreasing = FALSE)
@@ -27,7 +27,7 @@ cstock<-timescale["C",1]*(d)
 timescale["R", 1]<-timescale["S",1]/(timescale["V",1]+timescale["C",1])
 
 #exp[1:n]<-.3
-exp1<-read.csv("C:/Users/ndvil/Downloads/ExpR.csv")
+exp1<-read.csv("insert your file path here/ExpR.csv")
 exp[1:n]<-exp1[1:n,1]
 #exp<-(sample(20:30, n, replace = TRUE))/100
 #exp<-sort(exp, decreasing = TRUE)
@@ -68,3 +68,4 @@ timescale["S", n]/(timescale["V", n]+timescale["S", n])
 plot(timescale["C",(51:100)], timescale["S",(51:100)], type = "p", xlim = c(4, 20), ylim = c(0,40), xlab = "Capital Consumption", ylab = "Surplus", main = "Post 1980")
 plot(timescale["C",(2:50)], timescale["S",(2:50)], type = "p", xlim = c(4, 20), ylim = c(0,40), xlab = "Capital Consumption", ylab = "Surplus", main = "Pre 1980")
 plot(timescale["C",(2:100)], timescale["S",(2:100)], type = "p", xlim = c(4, 20), ylim = c(0,40), xlab = "Capital Consumption", ylab = "Surplus")
+plot(timescale["C",(2:100)], timescale["S",(2:100)], type = "p", xlab = "Capital Consumption", ylab = "Surplus")
