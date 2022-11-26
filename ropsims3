@@ -97,5 +97,5 @@ w1<-matrix()
 w1$c<-timescale["C",(2:n)]
 w1$s<-timescale["S",(2:n)]
 w1$r<-timescale["R",(2:n)]
-write.csv(w1, "C:/Users/ndvil/Downloads/wdatar3.csv")
+write.csv(w1, "your directory/wdatar3.csv")
 
