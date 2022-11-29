@@ -1,0 +1,130 @@
+d<-10
+##depreciation timeline
+n<-100
+##number of iterations
+time<-c(1:n)
+timescale <- matrix(nrow=6, ncol = n)
+timex <- matrix(nrow=1, ncol = n)
+timex<-c(sample(100, n, replace = TRUE))
+row.names(timescale)<-c("S", "V", "C", "Investment", "Capitalist Consumption", "R")
+timescale["S",1]<-30
+timescale["V",1]<-65
+timescale["C",1]<-5
+total<-sum(timescale["S",1], timescale["V",1], timescale["C",1] )
+depreciationF<- function()
+{
+  dp1<-1
+  dtemp<-0
+  for (dep in cstock)
+  {
+    if (dp1<d)
+    {
+      cstock[dp1]<<-dep+round(((2*(timescale["Investment",t]-dtemp))/d), digits = 3);
+      dtemp<-dtemp+round(((2*(timescale["Investment",t]-dtemp))/d), digits = 3);
+      dp1<-dp1+1;
+    }
+    else
+    {
+      cstock[dp1]<<-dep+round((timescale["Investment",t]-dtemp), digits = 3)
+    }
+  }
+}
+
+capconratio[1:n]<-.7
+
+capconratio<-matrix()
+capconratio1<-read.csv("C:/your file extension/invRdata.csv")
+capconratio[1:n]<-capconratio1[1:n,1]
+#this data can be found here: https://fred.stlouisfed.org/graph/?graph_id=1115695
+
+
+#capconratio<-(sample(30:90, n, replace = TRUE))/100
+#capconratio<-sort(capconratio, decreasing = TRUE)
+##amount of surplus consumed by capitalists
+
+timescale["Capitalist Consumption", 1]<-timescale["S",1]*capconratio[1]
+timescale["Investment",1]<-timescale["S",1]-timescale["Capitalist Consumption", 1]
+cstock[1:d]<-timescale["C",1]
+##stock of capital
+timescale["R", 1]<-timescale["S",1]/(timescale["V",1]+timescale["C",1])
+
+#exp[1:n]<-.30
+
+exp1<-read.csv("C:your file extension/ExpR.csv")
+exp[1:n]<-exp1[1:n,1]
+#data can be found here: https://fred.stlouisfed.org/graph/?graph_id=1129601
+
+#exp<-(sample(20:60, n, replace = TRUE))/100
+#exp<-sort(exp, decreasing = TRUE)
+#rate of exploitation
+t<-2
+while (t<=n)
+{
+  
+  timescale["C", t]<-round(cstock[1], digits =3);
+  timescale["S", t]<-round((total-timescale["C", (t)])*((exp[t])), digits = 3);
+  timescale["V", t]<-round((total-timescale["C", (t)])*(1-(exp[t])), digits = 3);
+  timescale["Capitalist Consumption", t]<-round((timescale["S",t]+timescale["C", t])*capconratio[t], digits =3);
+  timescale["Investment",t]<-round(timescale["S",t]+timescale["C", t]-timescale["Capitalist Consumption", t], digits = 3);
+  timescale["R", t]<- round(timescale["S",t]/(timescale["V",t]+timescale["C",t]), digits = 3);
+  inv1<-timescale["Investment",t];
+  cstock<-c(cstock[2:d],0 )
+  depreciationF()
+  #use depreciationF function for double declining balance depreciation
+  
+  #cstock<-round(cstock+(timescale["Investment",t]/d), digits = 3);
+  #use this function for regular depreciation schedule
+  t<-t+1
+}
+
+xsamp<-(time[5])
+ysamp<-(timescale["C",5])
+yminmax<-c(timescale["C",2:n],timescale["Investment",2:n] )
+plot(time[2:n], timescale["R",2:n], type = "l", xlab = "Time", ylab = "Rate of Profit")
+lines(time[2:n], exp[2:n], col = "blue" )
+legend(x=50,y=.5,c("Rate of Profit","Rate of Exploitation"),cex=.8,col=c("black","blue"),pch=c(1,2))
+plot(time[2:n], timescale["C",2:n], type = "l", col ="red", xlab = "time", 
+     ylim = c(min(yminmax), max(yminmax)), ylab = "Investment and Constant Capital")
+lines(time[2:n], timescale["Investment",2:n], col = "blue")
+legend(x=xsamp,y=ysamp,c("Constant Capital","Investment"),cex=.8,col=c("red","blue"),pch=c(1,2))
+ratio<-timescale["Investment",]/(timescale["C",])
+ratio1<-ratio[2:n]
+plot(ratio1, type = "l", xlab = "time", ylab = "Ratio of Investment and Constant Capital")
+OOC<-timescale["C",]/(timescale["V",])
+OOC2<-OOC[2:n]
+plot(OOC2, type = "l", xlab = "time", ylab = "Organic Capital Composition")
+head(timescale)
+timescale["S", n]/(timescale["V", n]+timescale["C", n])
+
+plot(timescale["C",(51:n)], timescale["S",(51:n)], type = "p", xlim = c(4, 20), ylim = c(0,40), xlab = "Capital Consumption", ylab = "Surplus", main = "Post 1980")
+plot(timescale["C",(2:50)], timescale["S",(2:50)], type = "p", xlim = c(4, 20), ylim = c(0,40), xlab = "Capital Consumption", ylab = "Surplus", main = "Pre 1980")
+plot(timescale["C",(2:n)], timescale["S",(2:n)], type = "p", xlim = c(4, 20), ylim = c(0,40), xlab = "Capital Consumption", ylab = "Surplus")
+plot(timescale["C",(15:n)], timescale["S",(15:n)], type = "p", xlab = "Capital Consumption", ylab = "Surplus")
+abline(lm(timescale["S",(15:n)]~timescale["C",(15:n)]))
+
+
+plot(timescale["V",(2:n)], timescale["S",(2:n)], type = "p", xlab = "Variable Capital", ylab = "Surplus")
+plot(timescale["V",(2:50)], timescale["S",(2:50)], type = "p", xlab = "Variable Capital", ylab = "Surplus", main = "Pre-1980")
+plot(timescale["V",(51:n)], timescale["S",(51:n)], type = "p", xlab = "Variable Capital", ylab = "Surplus", main = "Post-1980")
+
+summary(lm(timescale["S",(2:n)]~timescale["V",(2:n)]))
+summary(lm(timescale["S",(5:50)]~timescale["C",(5:50)]))
+summary(lm(timescale["S",(51:97)]~timescale["C",(51:97)]))
+
+slope1<-(1-(timescale["C",3:n]-timescale["C",2:(n-1)])-(timescale["V",3:n]-timescale["V",2:(n-1)]))/(timescale["C",3:n]-timescale["C",2:(n-1)])
+(timescale["S",3:n]-timescale["S",2:(n-1)])
+slope2<- slope1*timescale["C",3:n]
+
+(timescale["S",3:n]-timescale["S",2:(n-1)])
+
+mean(slope1[5:50])
+mean(slope1[51:97])
+
+
+plot(timescale["C",3:n],slope1)
+
+w1<-matrix()
+w1$c<-timescale["C",(2:n)]
+w1$s<-timescale["S",(2:n)]
+w1$r<-timescale["R",(2:n)]
+write.csv(w1, "C:your file extension/wdatar22.csv")
