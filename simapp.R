@@ -139,7 +139,7 @@ ui <- fluidPage(
       ),
       selectInput(
         inputId = "dropdown",
-        label = "Choose an Depreciation Type:",
+        label = "Choose a Depreciation Type:",
         choices = list("Normal Depreciation" = "opt1", " Double Declining Balance Depreciation" = "opt2"),
         selected = "opt1"
       ),
