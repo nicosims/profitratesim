@@ -140,7 +140,7 @@ ui <- fluidPage(
       selectInput(
         inputId = "dropdown",
         label = "Choose an Depreciation Type:",
-        choices = list("Normal Depreciation" = "opt1", " Double Declining Dalance Depreciation" = "opt2"),
+        choices = list("Normal Depreciation" = "opt1", " Double Declining Balance Depreciation" = "opt2"),
         selected = "opt1"
       ),
       downloadButton("download_data", "Download Data"),
