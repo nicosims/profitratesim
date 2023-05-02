@@ -24,6 +24,14 @@ timescale["V",1]<-fV
 timescale["C",1]<-fC
 total<-sum(timescale["S",1], timescale["V",1], timescale["C",1] )
 
+if ((fCCTrend=="opt1"))
+{
+  CCEnd<-min(fMinCapconR, fMaxCapconR)
+}
+else
+{
+  CCEnd<-max(fMinCapconR, fMaxCapconR)
+}
 capconratio<-matrix()
 if (fMinCapconR==fMaxCapconR)
 {
@@ -31,10 +39,9 @@ if (fMinCapconR==fMaxCapconR)
 }
 else
 {
-  capconratio<-(sample((fMinCapconR*100):(fMaxCapconR*100), n, replace = TRUE))/100
+  capconratio<-c((sample((fMinCapconR*100):(fMaxCapconR*100), (n-20), replace = TRUE))/100, matrix(data = CCEnd, nrow = 20))
   capconratio<-sort(capconratio, decreasing = (fCCTrend=="opt1"))
 }
-
 
 timescale["Capitalist Consumption", 1]<-timescale["S",1]*capconratio[1]
 timescale["Investment",1]<-timescale["S",1]-timescale["Capitalist Consumption", 1]
