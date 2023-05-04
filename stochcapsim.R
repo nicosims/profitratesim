@@ -26,7 +26,22 @@ simulF<-function(fS, fV, fC, fMinCapconR, fMinEXP, dType)
     prob1<-c(1:((fMinCapconR*100)+100), 1:(201-((fMinCapconR*100)+100)) )
     prob1<-prob1[1:200]
     prob1<-prob1/sum(prob1)
-    capconratio<-sample(1:200, n, replace = TRUE, prob = prob1 )
+    capconratio1<-((sample(1:200, n, replace = TRUE, prob = prob1 ))-100)/100
+    tick<-2
+    capconratio[1:n]<-.5
+    while (tick<= n)
+    {
+      capconratio[tick]<-capconratio[tick-1]*(1+capconratio1[tick])
+      if (capconratio[tick]>1)
+      {
+        capconratio[tick]<-1
+      }
+      if (capconratio[tick]<.01)
+      {
+        capconratio[tick]<-.01
+      }
+      tick<-tick+1
+    }
 
   
   
@@ -42,8 +57,22 @@ simulF<-function(fS, fV, fC, fMinCapconR, fMinEXP, dType)
   prob2<-c(1:((fMinEXP*100)+100), 1:(201-((fMinEXP*100)+100)) )
   prob2<-prob2[1:200]
   prob2<-prob2/sum(prob2)
-  exp<-sample(1:200, n, replace = TRUE, prob = prob1 )  
-  
+  exp1<-(sample(1:200, n, replace = TRUE, prob = prob1 )-100)/100
+  tick<-2
+  exp[1:n]<-.5
+  while (tick<= n)
+  {
+    exp[tick]<-exp[tick-1]*(1+exp1[tick])
+    if (exp[tick]>1)
+    {
+      exp[tick]<-1
+    }
+    if (exp[tick]<.01)
+    {
+      exp[tick]<-.01
+    }
+    tick<-tick+1
+  }
   t<-2
   while (t<=n)
   {
@@ -137,7 +166,12 @@ server <- function(input, output, session) {
     }
 
   })
-    # Download handler for the CSV file
+
+  observeEvent(input$submit_btn, {
+    simulR<-(
+    simulF(input$IntS,input$IntV, input$IntC, input$MinCapConR, input$MinExp, input$dropdown)
+  )
+      # Download handler for the CSV file
   output$download_data <- downloadHandler(
     filename = function() {
       "simulation_data.csv"
@@ -148,11 +182,6 @@ server <- function(input, output, session) {
     }
   )
  
-  observeEvent(input$submit_btn, {
-    simulR<-(
-    simulF(input$IntS,input$IntV, input$IntC, input$MinCapConR, input$MinExp, input$dropdown)
-  )
-
   simulS<-(
     simulR["S",]
   )
