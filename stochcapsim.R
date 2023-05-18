@@ -8,41 +8,42 @@ if (!is_package_installed("shiny")) {
 library(shiny)
 
 
-simulF<-function(fS, fV, fC, fMinCapconR, fMinEXP, dType)
+simulF<-function(fS, fV, fC, fMinCapconR, fMinEXP, dType, ftime)
 {
   d<-10
   ##depreciation timeline
-  n<-1000
+  n<-ftime
   ##number of iterations
   time<-c(1:n)
   timescale <- matrix(nrow=6, ncol = n)
-
+  
   row.names(timescale)<-c("S", "V", "C", "Investment", "Capitalist Consumption", "R")
   timescale["S",1]<-fS
   timescale["V",1]<-fV
   timescale["C",1]<-fC
   total<-sum(timescale["S",1], timescale["V",1], timescale["C",1] )
   
-    prob1<-c(1:((fMinCapconR*100)+100), 1:(201-((fMinCapconR*100)+100)) )
-    prob1<-prob1[1:200]
-    prob1<-prob1/sum(prob1)
-    capconratio1<-((sample(1:200, n, replace = TRUE, prob = prob1 ))-100)/100
-    tick<-2
-    capconratio[1:n]<-.5
-    while (tick<= n)
-    {
-      capconratio[tick]<-capconratio[tick-1]*(1+capconratio1[tick])
-      if (capconratio[tick]>1)
-      {
-        capconratio[tick]<-1
-      }
-      if (capconratio[tick]<.01)
-      {
-        capconratio[tick]<-.01
-      }
-      tick<-tick+1
-    }
 
+    prob1<-c(.5*(1+fMinCapconR/100), .5*(1-fMinCapconR/100))
+
+  capconratio1<-((sample(c(1,-1), n, replace = TRUE, prob = prob1 )))/100
+  tick<-2
+  capconratio<-matrix()
+  capconratio[1:n]<-.5
+  while (tick<= n)
+  {
+    capconratio[tick]<-capconratio[tick-1]+(capconratio1[tick])
+    if (capconratio[tick]>.8)
+    {
+      capconratio[tick]<-.8
+    }
+    if (capconratio[tick]<.2)
+    {
+      capconratio[tick]<-.2
+    }
+    tick<-tick+1
+  }
+  
   
   
   
@@ -53,23 +54,23 @@ simulF<-function(fS, fV, fC, fMinCapconR, fMinEXP, dType)
   ##stock of capital
   timescale["R", 1]<-timescale["S",1]/(timescale["V",1]+timescale["C",1])
   
+  prob2<-c(.5*(1+fMinEXP/100), .5*(1-fMinEXP/100))
+ 
+  exp1<-(sample(c(1,-1), n, replace = TRUE, prob = prob2 ))/100
 
-  prob2<-c(1:((fMinEXP*100)+100), 1:(201-((fMinEXP*100)+100)) )
-  prob2<-prob2[1:200]
-  prob2<-prob2/sum(prob2)
-  exp1<-(sample(1:200, n, replace = TRUE, prob = prob1 )-100)/100
   tick<-2
+  exp<-matrix()
   exp[1:n]<-.5
   while (tick<= n)
   {
-    exp[tick]<-exp[tick-1]*(1+exp1[tick])
-    if (exp[tick]>1)
+    exp[tick]<-exp[tick-1]+(exp1[tick])
+    if (exp[tick]>.8)
     {
-      exp[tick]<-1
+      exp[tick]<-.8
     }
-    if (exp[tick]<.01)
+    if (exp[tick]<.2)
     {
-      exp[tick]<-.01
+      exp[tick]<-.2
     }
     tick<-tick+1
   }
@@ -126,9 +127,22 @@ ui <- fluidPage(
       numericInput("IntS", "Initial Surplus:", value = 30),
       numericInput("IntV", "Initial Variable Capital:", value = 65),
       numericInput("IntC", "Initial Constant Capital:", value = 5),
-      HTML("<br></br><b><h4>Set Bias of Capitalist Consumption and Exploitation. Must be between -1 and 1.</h4></b>"),
-      numericInput("MinCapConR", "Bias of Change in Capitalist Consumption (High=More Consumption):", value = .3, min = -1, max = 1, step = .05),
-      numericInput("MinExp", "Bias of Change in Exploitation:", value = .3, min = -1, max = 1, step = .05),
+      numericInput("nTime", "Length of Simulation:", value = 100),
+      HTML("<br></br><b><h4>Set Bias of Capitalist Consumption and Exploitation. </h4></b>"),
+      sliderInput(inputId = "MinCapConR",
+                  label = "Choose probablistic bias towards positive or negative change in the ratio of Capitalist Consumption :",
+                  min = -80,
+                  max = 80,
+                  value = 0,
+                  step = 1),
+
+    sliderInput(inputId = "MinExp",
+                label = "Choose probablistic bias towards positive or negative change in the rate of Exploitation:",
+                min = -80,
+                max = 80,
+                value = 0,
+                step = 1),
+
       selectInput(
         inputId = "dropdown",
         label = "Choose a Depreciation Type:",
@@ -140,6 +154,7 @@ ui <- fluidPage(
     ),
     
     mainPanel(
+      htmlOutput("ratAvg"),
       plotOutput("result6"),
       plotOutput("result4"),
       plotOutput("result1"),
@@ -151,109 +166,135 @@ ui <- fluidPage(
 )
 
 server <- function(input, output, session) {
-  # Enforce the minimum and maximum values for each numeric input
   observe({
-    if (input$MinCapConR < -1) {
-      updateNumericInput(session, "MinCapConR", value = -1)
-    } else if (input$MinCapConR > 1) {
-      updateNumericInput(session, "MinCapConR", value = 1)
+    req(input$IntS,input$IntV, input$IntC, input$nTime)
+    if (input$nTime < 1) {
+      updateNumericInput(session, "nTime", value = 1)
+    } else if (input$nTime > 100000) {
+      updateNumericInput(session, "nTime", value = 100000)
     }
-
-    if (input$MinExp < -1) {
-      updateNumericInput(session, "MinExp", value = -1)
-    } else if (input$MinExp > 1) {
-      updateNumericInput(session, "MinExp", value = 1)
+    if (input$IntS < 1) {
+      updateNumericInput(session, "IntS", value = 1)
+    } else if (input$IntS > 100000) {
+      updateNumericInput(session, "IntS", value = 100000)
     }
-
+    if (input$IntV < 1) {
+      updateNumericInput(session, "IntV", value = 1)
+    } else if (input$IntV > 100000) {
+      updateNumericInput(session, "IntV", value = 100000)
+    }
+    if (input$IntC < 1) {
+      updateNumericInput(session, "IntC", value = 1)
+    } else if (input$IntC > 100000) {
+      updateNumericInput(session, "IntC", value = 100000)
+    }
+    
   })
-
+  
+  
   observeEvent(input$submit_btn, {
     simulR<-(
-    simulF(input$IntS,input$IntV, input$IntC, input$MinCapConR, input$MinExp, input$dropdown)
-  )
-      # Download handler for the CSV file
-  output$download_data <- downloadHandler(
-    filename = function() {
-      "simulation_data.csv"
-    }
-    ,
-    content = function(file) {
-      write.csv(simulR, file)
-    }
-  )
- 
-  simulS<-(
-    simulR["S",]
-  )
-  simulV<-(
-    simulR["V",]
-  )
-  simulC<-(
-    simulR["C",]
-  )
-  simulRoP<-(
-    simulR["R",]
-  )
-  simulExp<-(
-    simulR[7,]
-  )
-  simulInv<-(
-    simulR["Investment",]
-  )
-  simulCC<-(
-    simulR["Capitalist Consumption",]
-  )
-  simulCCR<-(
-    simulR[8,]
-  )
-  simulIR<-(
-    simulC/simulInv
-  )
-  output$result1 <- renderPlot({
-    req(input$IntS!="",input$IntV!="", input$IntC!="", input$MinCapConR!="", input$MinExp!="", cancelOutput = TRUE)
-    par(font.main = 2, font.lab = 2, font.axis = 2, cex = 1.2)
-    plot(simulS, type="l", xlab = "time",ylim = c(0,100),ylab = "", main = "Surplus Breakdown")
-    grid(nx= NA , ny=NULL, col = "gray", lty = "dotted", equilogs = FALSE)
-    lines(simulInv, col = "red")
-    lines(simulCC, col = "blue")
-    legend("topright", legend = c("Surplus", "Gross Investment", "Capitalist Consumption"), col = c("black", "red", "blue"), lty = 1, cex = 0.8)
+      simulF(input$IntS,input$IntV, input$IntC, input$MinCapConR, input$MinExp, input$dropdown, input$nTime)
+    )
+    # Download handler for the CSV file
+    output$download_data <- downloadHandler(
+      filename = function() {
+        "simulation_data.csv"
+      }
+      ,
+      content = function(file) {
+        write.csv(simulR, file)
+      }
+    )
+    
+    simulS<-(
+      simulR["S",]
+    )
+    simulV<-(
+      simulR["V",]
+    )
+    simulC<-(
+      simulR["C",]
+    )
+    simulRoP<-(
+      simulR["R",]
+    )
+    simulExp<-(
+      simulR[7,]
+    )
+    simulInv<-(
+      simulR["Investment",]
+    )
+    simulCC<-(
+      simulR["Capitalist Consumption",]
+    )
+    simulCCR<-(
+      simulR[8,]
+    )
+    simulIR<-(
+      simulC/simulInv
+    )
+
+    output$ratAvg<-renderText({ratAvg1})
+    
+    output$ratAvg <- renderUI({
+      # Perform a simple calculation
+      ratAvg1<-( mean(simulIR[20:length(simulIR)]))
+      
+      tags$div(
+        tags$p("Mean Ratio of Capitalist Consumption and Investment, excluding first 20 values: ",
+               style = "font-weight:bold;text-align:center; display:block;"),
+        tags$p(tags$span(ratAvg1, 
+                         style = "color:red; font-style:bold;text-align:center; display:block;")
+        )
+      )
+    })
+    
+    output$result1 <- renderPlot({
+      req(input$IntS!="",input$IntV!="", input$IntC!="", input$MinCapConR!="", input$MinExp!="", cancelOutput = TRUE)
+      par(font.main = 2, font.lab = 2, font.axis = 2, cex = 1.2)
+      plot(simulS, type="l", xlab = "time",ylim = c(0,100),ylab = "", main = "Surplus Breakdown")
+      grid(nx= NA , ny=NULL, col = "gray", lty = "dotted", equilogs = FALSE)
+      lines(simulInv, col = "red")
+      lines(simulCC, col = "blue")
+      legend("topright", legend = c("Surplus", "Gross Investment", "Capitalist Consumption"), col = c("black", "red", "blue"), lty = 1, cex = 0.8)
+    })
+    output$result2 <- renderPlot({
+      req(input$IntS!="",input$IntV!="", input$IntC!="", input$MinCapConR!="", input$MinExp!="", cancelOutput = TRUE)    
+      par(font.main = 2, font.lab = 2, font.axis = 2, cex = 1.2)
+      plot(simulV, type="l", xlab = "time",ylim = c(0,100), ylab = "", main = "Variable Capital and Capitalist Consumption")
+      grid(nx= NA , ny=NULL, col = "gray", lty = "dotted", equilogs = FALSE)
+      lines(simulCC, col = "blue")
+      legend("topright", legend = c("Variable Capital", "Capitalist Consumption"), col = c("black", "blue"), lty = 1, cex = 0.8)
+    })
+    output$result3 <- renderPlot({
+      req(input$IntS!="",input$IntV!="", input$IntC!="", input$MinCapConR!="", input$MinExp!="", cancelOutput = TRUE)    
+      par(font.main = 2, font.lab = 2, font.axis = 2, cex = 1.2)
+      plot(simulC, type="l", xlab = "time",ylim = c(0,100), ylab = "", main = "Constant Capital and Investment")
+      grid(nx= NA , ny=NULL, col = "gray", lty = "dotted", equilogs = FALSE)
+      lines(simulInv, col = "red")
+      legend("topright", legend = c("Constant Capital/Depreciation", "Gross Investment"), col = c("black", "red"), lty = 1, cex = 0.8)
+    })
+    output$result4 <- renderPlot({
+      req(input$IntS!="",input$IntV!="", input$IntC!="", input$MinCapConR!="", input$MinExp!="", cancelOutput = TRUE)    
+      par(font.main = 2, font.lab = 2, font.axis = 2, cex = 1.2)
+      plot(simulRoP, type="l", xlab = "time", ylim = c(0,max(c(simulRoP,1) )), ylab = "", main = "Rates of Profit and Exploitation")
+      grid(nx= NA , ny=NULL, col = "gray", lty = "dotted", equilogs = FALSE)                           
+      lines(simulExp, col = "red")
+      legend("topright", legend = c("Rate of Profit", "Rate of Exploitation"), col = c("black", "red"), lty = 1, cex = 0.8)
+    })
+    output$result5 <- renderPlot({
+      par(font.main = 2, font.lab = 2, font.axis = 2, cex = 1.2)
+      req(input$IntS!="",input$IntV!="", input$IntC!="", input$MinCapConR!="", input$MinExp!="", cancelOutput = TRUE)    
+      plot(simulCCR, type="l", xlab = "time", ylab = "",ylim = c(0,1), main = "Rate of Capitalist Consumption")
+      grid(nx= NA , ny=NULL, col = "gray", lty = "dotted", equilogs = FALSE)
+    })
+    output$result6 <- renderPlot({
+      par(font.main = 2, font.lab = 2, font.axis = 2, cex = 1.2)
+      req(input$IntS!="",input$IntV!="", input$IntC!="", input$MinCapConR!="", input$MinExp!="", cancelOutput = TRUE)    
+      plot(simulIR, type="l", xlab = "time", ylab = "", main = "Ratio of Constant Capital to Gross Investment")
+      grid(nx= NA , ny=NULL, col = "gray", lty = "dotted", equilogs = FALSE)
+    })
   })
-  output$result2 <- renderPlot({
-    req(input$IntS!="",input$IntV!="", input$IntC!="", input$MinCapConR!="", input$MinExp!="", cancelOutput = TRUE)    
-    par(font.main = 2, font.lab = 2, font.axis = 2, cex = 1.2)
-    plot(simulV, type="l", xlab = "time",ylim = c(0,100), ylab = "", main = "Variable Capital and Capitalist Consumption")
-    grid(nx= NA , ny=NULL, col = "gray", lty = "dotted", equilogs = FALSE)
-    lines(simulCC, col = "blue")
-    legend("topright", legend = c("Variable Capital", "Capitalist Consumption"), col = c("black", "blue"), lty = 1, cex = 0.8)
-  })
-  output$result3 <- renderPlot({
-    req(input$IntS!="",input$IntV!="", input$IntC!="", input$MinCapConR!="", input$MinExp!="", cancelOutput = TRUE)    
-    par(font.main = 2, font.lab = 2, font.axis = 2, cex = 1.2)
-    plot(simulC, type="l", xlab = "time",ylim = c(0,100), ylab = "", main = "Constant Capital and Investment")
-    grid(nx= NA , ny=NULL, col = "gray", lty = "dotted", equilogs = FALSE)
-    lines(simulInv, col = "red")
-    legend("topright", legend = c("Constant Capital/Depreciation", "Gross Investment"), col = c("black", "red"), lty = 1, cex = 0.8)
-  })
-  output$result4 <- renderPlot({
-    req(input$IntS!="",input$IntV!="", input$IntC!="", input$MinCapConR!="", input$MinExp!="", cancelOutput = TRUE)    
-    par(font.main = 2, font.lab = 2, font.axis = 2, cex = 1.2)
-    plot(simulRoP, type="l", xlab = "time", ylim = c(0,max(c(simulRoP,1) )), ylab = "", main = "Rates of Profit and Exploitation")
-    grid(nx= NA , ny=NULL, col = "gray", lty = "dotted", equilogs = FALSE)                           
-    lines(simulExp, col = "red")
-    legend("topright", legend = c("Rate of Profit", "Rate of Exploitation"), col = c("black", "red"), lty = 1, cex = 0.8)
-  })
-  output$result5 <- renderPlot({
-    par(font.main = 2, font.lab = 2, font.axis = 2, cex = 1.2)
-    req(input$IntS!="",input$IntV!="", input$IntC!="", input$MinCapConR!="", input$MinExp!="", cancelOutput = TRUE)    
-    plot(simulCCR, type="l", xlab = "time", ylab = "",ylim = c(0,1), main = "Rate of Capitalist Consumption")
-    grid(nx= NA , ny=NULL, col = "gray", lty = "dotted", equilogs = FALSE)
-  })
-  output$result6 <- renderPlot({
-    par(font.main = 2, font.lab = 2, font.axis = 2, cex = 1.2)
-    req(input$IntS!="",input$IntV!="", input$IntC!="", input$MinCapConR!="", input$MinExp!="", cancelOutput = TRUE)    
-    plot(simulIR, type="l", xlab = "time", ylab = "", main = "Ratio of Constant Capital to Gross Investment")
-    grid(nx= NA , ny=NULL, col = "gray", lty = "dotted", equilogs = FALSE)
-  })
-})
 }
 shinyApp(ui = ui, server = server)
