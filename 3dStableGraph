@@ -1,0 +1,56 @@
+is_package_installed <- function(package_name) {
+  length(find.package(package_name, quiet = TRUE)) > 0
+}
+# Usage
+if (!is_package_installed("rgl")) {
+  install.packages("rgl")
+}
+if (!is_package_installed("shiny")) {
+  install.packages("shiny")
+}
+library(shiny)
+library(rgl)
+
+# Define the UI
+ui <- fluidPage(
+  titlePanel("3D Scatter Plot of Randomly Generated Pairs of Rate of Exploitation and Rate of Capitalist Consumption That Produce Equalized Levels of Investment & Depreciation"),
+  div(style = "display: flex; justify-content: center;",
+      rglwidgetOutput("plot3d", width = "80vw", height = "60vh")
+      ),
+  htmlOutput("max"),
+)
+server <- function(input, output) {
+      SMnL<-10000
+    solutMat<-matrix(nrow = SMnL, ncol = 3)
+    colnames(solutMat)<-c("CI", "Exp", "CR")
+    
+    solutMat[1:SMnL, 1]<-sample(1:100, SMnL, replace = TRUE)/100
+    solutMat[1:SMnL, 2]<-sample(1:100, SMnL, replace = TRUE)/100
+    
+    solutMat[1:SMnL, 3]<-round(-(solutMat[,1]/((1-solutMat[,1])*solutMat[,2]))+1, digits = 3)
+    solutMat2<-solutMat[(solutMat[1:SMnL, 3]>0&solutMat[1:SMnL, 3]<1),]
+    
+    output$plot3d <- renderRglwidget({
+
+    
+    
+    plot3d(solutMat2[,1], solutMat2[,2], solutMat2[,3], col = "lightblue", xlab = "Equalized Constant Capital & Investment", ylab = "Rate of Exploitation", zlab = "Rate of Capitalist Consumption")
+    rglwidget()
+  })
+  output$max<-renderUI({
+    # Perform a simple calculation
+    ratAvg1<-max(solutMat2[,1])
+    
+    tags$div(
+      tags$p("Max Equalized Constant Capital & Investment Given 1=Total Mass of Value: ",
+             style = "font-weight:bold;text-align:center; display:block;"),
+      tags$p(tags$span(ratAvg1, 
+                       style = "color:red; font-style:bold;text-align:center; display:block;")
+      )
+    )
+  })
+
+}
+
+# Run the app
+shinyApp(ui = ui, server = server)
